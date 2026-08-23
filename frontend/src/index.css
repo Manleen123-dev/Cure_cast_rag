@@ -1,0 +1,136 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+
+/* =========================================================
+   TAILWIND v4 THEME EXTENSION
+   ========================================================= */
+
+@theme {
+  --font-display: "Manrope", sans-serif;
+  --font-body: "DM Sans", sans-serif;
+
+  --color-brand-50: #e4f1ef;
+  --color-brand-100: #c3e0dc;
+  --color-brand-200: #9ccdc6;
+  --color-brand-300: #6fb6ac;
+  --color-brand-400: #429e91;
+  --color-brand-500: #237b78;
+  --color-brand-600: #1e6b68;
+  --color-brand-700: #185957;
+  --color-brand-800: #134745;
+  --color-brand-900: #0e3634;
+
+  --shadow-card: 0 1px 2px rgba(23, 33, 29, 0.04), 0 8px 24px -12px rgba(23, 33, 29, 0.10);
+  --shadow-soft: 0 1px 2px rgba(23, 33, 29, 0.03), 0 4px 14px -8px rgba(23, 33, 29, 0.08);
+  --shadow-glow: 0 10px 30px -10px rgba(35, 123, 120, 0.35);
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* =========================================================
+   COLOR TOKENS — LIGHT / DARK
+   ========================================================= */
+
+:root {
+  --bg: #f7f7f3;
+  --surface: #ffffff;
+  --surface-hover: #fbfbf9;
+
+  --text-primary: #17211d;
+  --text-secondary: #65706b;
+  --text-muted: #8b948f;
+
+  --border: #dee4e0;
+  --border-strong: #cbd3ce;
+
+  --primary: #237b78;
+  --primary-hover: #1c6a67;
+  --primary-soft: #e4f1ef;
+
+  --mild: #4f866a;
+  --mild-bg: #e7f0ea;
+
+  --moderate: #a87932;
+  --moderate-bg: #f6ecd9;
+
+  --severe: #b75b5b;
+  --severe-bg: #f7e6e6;
+
+  --warning: #a87932;
+  --warning-bg: #f6ecd9;
+
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+
+  --container: 1160px;
+  --transition: 220ms ease;
+  --transition-fast: 140ms ease;
+}
+
+html.dark {
+  --bg: #0f1716;
+  --surface: #18211f;
+  --surface-hover: #1c2624;
+
+  --text-primary: #edf3ef;
+  --text-secondary: #a8b5af;
+  --text-muted: #728079;
+
+  --border: #2a3733;
+  --border-strong: #384540;
+
+  --primary: #4d9692;
+  --primary-hover: #5fa8a4;
+  --primary-soft: #16302e;
+
+  --mild: #6ea589;
+  --mild-bg: #1a2e26;
+
+  --moderate: #c69a55;
+  --moderate-bg: #33291a;
+
+  --severe: #c67878;
+  --severe-bg: #332020;
+
+  --warning: #c69a55;
+  --warning-bg: #33291a;
+}
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-family: var(--font-display);
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+p { margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
