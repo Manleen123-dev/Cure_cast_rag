@@ -1,88 +1,154 @@
-# CureCast
+# CureCast 🩺
 
-CureCast is an AI-powered disease prediction application. It allows users to input their symptoms and uses a machine learning model to predict the most likely diseases, along with their probabilities, severity, and the recommended specialist to consult.
+### AI-Assisted Symptom Screening & Medical Explanation Platform
 
-## Architecture
+CureCast is an AI-assisted symptom-screening application designed to help users understand possible health conditions based on the symptoms they provide.
 
-The project follows a standard decoupled client-server architecture:
+Instead of simply returning a predicted disease, CureCast combines a **machine-learning prediction model** with **retrieval-based medical context** to provide a more understandable explanation of the result and encourage appropriate follow-up when necessary.
 
-1. **Frontend (React + Vite + Tailwind CSS):**
-   - Provides a responsive, modern user interface.
-   - Allows users to select symptoms and view predictions.
-   - Communicates with the backend via REST API calls using `axios`.
-   - Uses `framer-motion` for smooth UI animations.
+> ⚠️ **Medical Disclaimer:** CureCast is an educational screening-support tool and is not a substitute for professional medical diagnosis, emergency evaluation, or treatment advice.
 
-2. **Backend (Flask + Python):**
-   - Serves as the API layer connecting the frontend to the machine learning model.
-   - Built with Flask and handles CORS for frontend communication.
-   - Loads a pre-trained CatBoost model (`curecast_catboost_optimized.pkl`).
-   - Maps diseases to severity levels and specialist recommendations using a catalog (`disease_list_with_counts.csv`).
+---
 
-3. **Machine Learning:**
-   - Uses a serialized CatBoost model (`.pkl` file) trained on symptom-disease datasets.
-   - The `train.py` script contains the logic used to train and optimize this model.
+## ✨ Features
 
-## API Endpoints
+### 🔍 AI-Based Symptom Screening
 
-The Flask backend exposes the following REST endpoints:
+Users can select symptoms from a comprehensive symptom library and submit them for analysis.
 
-- `GET /` : Health check endpoint.
-- `GET /symptoms` : Returns a list of all available symptoms that the model can process.
-- `GET /diseases` : Returns a catalog of diseases along with metadata (severity, sample counts, recommended specialist).
-- `POST /predict` : 
-  - **Payload:** `{"symptoms": ["fever", "cough", ...]}`
-  - **Response:** Returns the top 3 most likely diseases based on the provided symptoms, including their probabilities, severity, and recommended specialist.
+The backend processes the selected symptoms and uses a trained **CatBoost classification model** to identify the conditions that are most consistent with the provided symptoms.
 
-## Getting Started
+---
 
-### Prerequisites
-- Node.js (v18+ recommended)
-- Python (v3.8+ recommended)
-- pip
+### 🧠 Retrieval-Based Medical Explanations
 
-### 1. Start the Backend Server
+CureCast goes beyond a simple prediction.
 
-```bash
-# Navigate to the project root
-cd CureCast
+After generating a prediction, the system retrieves relevant medical context from the application's knowledge base and uses it to provide:
 
-# Install dependencies
-pip install -r backend/requirements.txt
+- Explanation of the predicted condition
+- Relevant medical context
+- Supporting information
+- Practical next-step guidance
+- Retrieved sources/context used for the explanation
 
-# Start the Flask server
-flask --app backend/main.py run
-```
-The backend will run on `http://127.0.0.1:5000`.
+This creates a pipeline of:
 
-### 2. Start the Frontend Application
+**Symptoms → ML Prediction → Medical Context Retrieval → Explanation**
 
-```bash
-# Open a new terminal and navigate to the frontend directory
-cd CureCast/frontend
+---
 
-# Install dependencies
-npm install
+### 📊 Confidence-Aware Results
 
-# Start the development server
-npm run dev
-```
-The frontend will run on `http://localhost:5173`.
+Predictions are presented together with their confidence score.
 
-## Scaling & Future Enhancements
+Rather than treating confidence as a definitive diagnosis, CureCast provides contextual language around the result so that lower-confidence predictions are communicated appropriately.
 
-If you want to scale this project further, consider the following areas:
+For example:
 
-### Backend & Model
-- **Database Integration:** Replace the static CSV (`disease_list_with_counts.csv`) with a robust database (e.g., PostgreSQL, MongoDB) to store disease catalogs, user histories, and telemetry.
-- **Model Updating:** Automate the retraining pipeline. Trigger `train.py` periodically with new data and deploy the updated `.pkl` artifact via CI/CD.
-- **Containerization:** Wrap the Flask app and React app in Docker containers (`Dockerfile` and `docker-compose.yml`) for easier deployment and scaling using cloud providers (AWS, GCP, etc.).
-- **API Authentication:** Secure the `/predict` endpoint using JWT or API keys if you plan to expose it to the public internet or third-party apps.
+> Low-confidence match — the selected symptoms are most consistent with this condition, but other causes may also be possible.
 
-### Frontend
-- **State Management:** As the app grows, introduce a state management library (like Redux or Zustand) to handle complex symptom selections and user sessions.
-- **Progressive Web App (PWA):** Configure Vite to output a PWA so users can install CureCast on their mobile devices for offline capabilities and native feel.
-- **Localization (i18n):** Add multi-language support so users can select symptoms and view diseases in their native languages.
+---
 
-### Machine Learning
-- **Feedback Loop:** Allow users or medical professionals to provide feedback on prediction accuracy to improve the model over time.
-- **More Features:** Incorporate user demographics (age, gender, pre-existing medical history) into the prediction model alongside symptoms for much higher accuracy.
+### 🟢 Priority-Based Results
+
+Predictions can be presented using different priority levels:
+
+- **Mild**
+- **Moderate**
+- **Severe**
+
+Each priority level has its own visual treatment to make the result easier to understand at a glance.
+
+---
+
+### 🕘 Past Checks
+
+CureCast maintains a history of previous symptom checks.
+
+Users can:
+
+- View previous predictions
+- See when a check was performed
+- Review the symptoms used
+- Reopen a previous check
+- Remove saved checks
+
+This allows users to compare previous symptom patterns without repeating the entire process.
+
+---
+
+### 🌗 Light & Dark Mode
+
+The interface supports both:
+
+- Light clinical theme
+- Dark theme
+
+The themes use shared CSS design tokens so that components remain visually consistent across both modes.
+
+---
+
+### 📱 Responsive Interface
+
+The frontend is designed to work across:
+
+- Desktop
+- Laptop
+- Tablet
+- Mobile
+
+The layout adapts the symptom selector, prediction results, history panel, and navigation for smaller screens.
+
+---
+
+## 🏗️ System Architecture
+
+CureCast follows a frontend-backend architecture.
+
+```text
+                    ┌──────────────────────┐
+                    │      User            │
+                    │ Selects Symptoms     │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │   React Frontend     │
+                    │   Vite Application    │
+                    └──────────┬───────────┘
+                               │
+                         HTTP Request
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │    Flask Backend     │
+                    │      /predict        │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │   CatBoost Model     │
+                    │ Symptom Classification│
+                    └──────────┬───────────┘
+                               │
+                         Prediction
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │  Retrieval System    │
+                    │ Medical Knowledge    │
+                    │       Context        │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │ Explanation & Result │
+                    │  Confidence + Info   │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │    React UI          │
+                    │ Prediction + Sources │
+                    └──────────────────────┘
