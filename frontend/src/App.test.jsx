@@ -88,13 +88,13 @@ describe('App', () => {
   it('loads symptoms and shows the landing and checker experience', async () => {
     render(<App />);
 
-    expect(screen.getByText(/understand symptoms with a calmer/i)).toBeInTheDocument();
+    expect(screen.getByText(/a clearer first step toward/i)).toBeInTheDocument();
     expect(
-  screen.getAllByRole('button', { name: /check symptoms/i }).length
-).toBeGreaterThan(0);
+      screen.getAllByRole('button', { name: /check symptoms/i }).length
+    ).toBeGreaterThan(0);
 
     await waitFor(() => {
-      expect(screen.getByText(/4 known symptoms available/i)).toBeInTheDocument();
+      expect(screen.getByText(/4 known symptoms/i)).toBeInTheDocument();
     });
   });
 
@@ -102,7 +102,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await screen.findByText(/4 known symptoms available/i);
+    await screen.findByText(/4 known symptoms/i);
 
     const searchInput = screen.getByLabelText(/search symptoms/i);
     await user.type(searchInput, 'fev');
@@ -114,7 +114,7 @@ describe('App', () => {
     expect(screen.getByText('fever')).toBeInTheDocument();
     expect(screen.getByText('cough')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /^predict$/i }));
+    await user.click(screen.getByRole('button', { name: /analyze symptoms/i }));
 
     await screen.findAllByText('Flu');
     expect(axios.post).toHaveBeenCalledWith('http://127.0.0.1:5000/predict', {
@@ -122,8 +122,8 @@ describe('App', () => {
     });
 
     expect(screen.getByText(/flu is the leading current match/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/source citations/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/recent symptom history/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/evidence used/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/past checks/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText('Flu').length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole('button', { name: /read more/i }));
@@ -144,12 +144,12 @@ describe('App', () => {
     });
 
     render(<App />);
-    await screen.findByText(/4 known symptoms available/i);
+    await screen.findByText(/4 known symptoms/i);
 
     const searchInput = screen.getByLabelText(/search symptoms/i);
     await user.type(searchInput, 'hea');
     await user.click(await screen.findByRole('button', { name: /headache/i }));
-    await user.click(screen.getByRole('button', { name: /^predict$/i }));
+    await user.click(screen.getByRole('button', { name: /analyze symptoms/i }));
 
     expect(await screen.findByText(/prediction could not be completed right now/i)).toBeInTheDocument();
   });
