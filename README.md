@@ -7,7 +7,7 @@
 [![Deployment](https://img.shields.io/badge/API-Render-46E3B7?logo=render&logoColor=white)](https://cure-cast-rag.onrender.com)
 
 **Live API:** [cure-cast-rag.onrender.com](https://cure-cast-rag.onrender.com)
-https://cure-cast-rag.vercel.app/
+  **Live API:**  https://cure-cast-rag.vercel.app/
 
 ## What CureCast does
 
