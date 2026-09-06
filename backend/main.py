@@ -21,7 +21,8 @@ from rag.synthesizer import ExplanationSynthesizer
 # Configuration
 # ------------------------------------------------------------------
 
-ARTIFACT_PATH = BACKEND_DIR / "../curecast_catboost_optimized.pkl"
+MODEL_CBM_PATH = BACKEND_DIR / "../curecast_model.cbm"
+META_PKL_PATH = BACKEND_DIR / "../curecast_meta.pkl"
 DISEASE_CSV_PATH = BACKEND_DIR / "../disease_list_with_counts.csv"
 
 
@@ -29,14 +30,16 @@ DISEASE_CSV_PATH = BACKEND_DIR / "../disease_list_with_counts.csv"
 # Loaders
 # ------------------------------------------------------------------
 
-def load_artifact(path: Path):
-    with open(path, "rb") as f:
-        artifact = pickle.load(f)
-
-    model = artifact.get("model")
-    label_encoder = artifact["label_encoder"]
-    symptoms = artifact.get("symptoms") or artifact.get("features") or []
+def load_artifact(cbm_path: Path, meta_path: Path):
+    from catboost import CatBoostClassifier
+    model = CatBoostClassifier()
+    model.load_model(str(cbm_path))
+    with open(meta_path, "rb") as f:
+        meta = pickle.load(f)
+    label_encoder = meta["label_encoder"]
+    symptoms = meta.get("symptoms") or meta.get("features") or []
     return model, label_encoder, symptoms
+
 
 SEVERITY_OVERRIDES = {
     "heart attack": "Severe",
@@ -122,10 +125,11 @@ def serialize_prediction_row(row: pd.Series) -> Dict[str, object]:
 
 
 def create_runtime(
-    artifact_path: Path = ARTIFACT_PATH,
+    cbm_path: Path = MODEL_CBM_PATH,
+    meta_path: Path = META_PKL_PATH,
     disease_csv_path: Path = DISEASE_CSV_PATH,
 ) -> Dict[str, object]:
-    model, label_encoder, symptoms = load_artifact(artifact_path)
+    model, label_encoder, symptoms = load_artifact(cbm_path, meta_path)
     disease_catalog = load_disease_catalog(disease_csv_path)
     retriever = CureCastRetriever(BACKEND_DIR / "rag")
     synthesizer = ExplanationSynthesizer()
