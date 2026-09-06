@@ -9,3 +9,7 @@ frontend/node_modules
 catboost_info
 pytest-cache-files-*
 *.log
+backend/rag/data/embedding_model/
+backend/rag/data/faiss_index.bin
+backend/rag/data/chunks.json
+backend/rag/data/medical_docs/

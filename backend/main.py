@@ -1,5 +1,5 @@
 import os
-import pickle
+import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,28 +21,13 @@ from rag.synthesizer import ExplanationSynthesizer
 # Configuration
 # ------------------------------------------------------------------
 
-MODEL_CBM_PATH = BACKEND_DIR / "../curecast_model.cbm"
-META_PKL_PATH = BACKEND_DIR / "../curecast_meta.pkl"
 DISEASE_CSV_PATH = BACKEND_DIR / "../disease_list_with_counts.csv"
+SYMPTOMS_JSON_PATH = BACKEND_DIR / "rag/data/symptoms.json"
 
 
 # ------------------------------------------------------------------
 # Loaders
 # ------------------------------------------------------------------
-
-def load_artifact(cbm_path: Path, meta_path: Path):
-    from catboost import CatBoostClassifier
-    # The default lets CatBoost create a worker pool for every available CPU.
-    # On small cloud instances those native thread stacks can exhaust memory
-    # before the web worker finishes starting.
-    model = CatBoostClassifier(thread_count=1)
-    model.load_model(str(cbm_path))
-    with open(meta_path, "rb") as f:
-        meta = pickle.load(f)
-    label_encoder = meta["label_encoder"]
-    symptoms = meta.get("symptoms") or meta.get("features") or []
-    return model, label_encoder, symptoms
-
 
 SEVERITY_OVERRIDES = {
     "heart attack": "Severe",
@@ -103,19 +88,6 @@ def load_disease_catalog(path: Path):
 # Helpers
 # ------------------------------------------------------------------
 
-def build_feature_frame(selected: List[str], known_symptoms: List[str]) -> pd.DataFrame:
-    vector = pd.DataFrame(
-        data=0,
-        index=[0],
-        columns=known_symptoms,
-        dtype=np.float32,
-    )
-    active = [sym for sym in selected if sym in known_symptoms]
-    if active:
-        vector.loc[0, active] = 1.0
-    return vector
-
-
 def serialize_prediction_row(row: pd.Series) -> Dict[str, object]:
     return {
         "disease": row["Disease"],
@@ -127,24 +99,40 @@ def serialize_prediction_row(row: pd.Series) -> Dict[str, object]:
     }
 
 
-def create_runtime(
-    cbm_path: Path = MODEL_CBM_PATH,
-    meta_path: Path = META_PKL_PATH,
-    disease_csv_path: Path = DISEASE_CSV_PATH,
-) -> Dict[str, object]:
-    model, label_encoder, symptoms = load_artifact(cbm_path, meta_path)
+def create_runtime(disease_csv_path: Path = DISEASE_CSV_PATH) -> Dict[str, object]:
     disease_catalog = load_disease_catalog(disease_csv_path)
     retriever = CureCastRetriever(BACKEND_DIR / "rag")
     synthesizer = ExplanationSynthesizer()
-    print(f"BACKEND LOG: Loaded {len(symptoms)} symptoms from artifact.")
+    with open(SYMPTOMS_JSON_PATH, encoding="utf-8") as file:
+        symptoms = json.load(file)
+    print(f"BACKEND LOG: Loaded {len(symptoms)} symptoms from lightweight knowledge base.")
     return {
-        "model": model,
-        "label_encoder": label_encoder,
         "symptoms": symptoms,
         "disease_catalog": disease_catalog,
         "retriever": retriever,
         "synthesizer": synthesizer,
     }
+
+
+def lightweight_predictions(selected: List[str], runtime_data: Dict[str, object]) -> pd.DataFrame:
+    """Rank disease cards by symptom overlap without the 1 GB CatBoost model."""
+    selected_normalized = [symptom.lower() for symptom in selected]
+    rows = []
+    for document in runtime_data["retriever"].metadata:
+        text = str(document.get("text", "")).lower()
+        matches = sum(symptom in text for symptom in selected_normalized)
+        if matches:
+            rows.append({"Disease": document.get("disease", ""), "Score": matches / len(selected)})
+
+    if not rows:
+        fallback = runtime_data["disease_catalog"].nlargest(4, "Sample_Count")
+        return fallback.assign(Probability=0.25, Percent=25.0)[["Disease", "Probability", "Percent"]]
+
+    predictions = pd.DataFrame(rows).groupby("Disease", as_index=False)["Score"].max()
+    predictions = predictions.sort_values("Score", ascending=False).head(4)
+    predictions["Probability"] = predictions["Score"] / predictions["Score"].sum()
+    predictions["Percent"] = predictions["Probability"] * 100
+    return predictions[["Disease", "Probability", "Percent"]]
 
 
 def get_runtime() -> Dict[str, object]:
@@ -193,16 +181,18 @@ def create_app(runtime: Dict[str, object] | None = None) -> Flask:
                 "disclaimer": "CureCast offers screening support only and is not a substitute for professional medical advice.",
             }), 400
 
-        features = build_feature_frame(normalized_symptoms, known_symptoms)
-        probabilities = runtime_data["model"].predict_proba(features)[0]
-        classes = runtime_data["label_encoder"].inverse_transform(np.arange(len(probabilities)))
-
-        df = (
-            pd.DataFrame({"Disease": classes, "Probability": probabilities})
-            .sort_values("Probability", ascending=False)
-            .head(4)
-        )
-        df["Percent"] = (df["Probability"] * 100)
+        if "model" in runtime_data:
+            # Preserves support for the small injected test runtime.
+            features = pd.DataFrame(data=0, index=[0], columns=known_symptoms, dtype=np.float32)
+            features.loc[0, normalized_symptoms] = 1.0
+            probabilities = runtime_data["model"].predict_proba(features)[0]
+            classes = runtime_data["label_encoder"].inverse_transform(np.arange(len(probabilities)))
+            df = pd.DataFrame({"Disease": classes, "Probability": probabilities}).sort_values(
+                "Probability", ascending=False
+            ).head(4)
+            df["Percent"] = df["Probability"] * 100
+        else:
+            df = lightweight_predictions(normalized_symptoms, runtime_data)
         df["Disease_norm"] = df["Disease"].str.lower()
         merged = df.merge(
             runtime_data["disease_catalog"],

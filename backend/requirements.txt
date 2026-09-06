@@ -1,11 +1,5 @@
 Flask
 Flask-Cors
-scikit-learn
-catboost
 pandas
 numpy
-pydantic
-faiss-cpu
-sentence-transformers
-pytest
 gunicorn
