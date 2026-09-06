@@ -40,20 +40,11 @@ class CureCastRetriever:
             "metadata.json"
         )
 
+        # Embedding model directory (optional local path)
         self.MODEL_DIR = os.path.join(
             self.DATA_DIR,
             "embedding_model"
         )
-
-        # --------------------------------------------------
-        # Paths
-        # --------------------------------------------------
-
-        
-
-        # --------------------------------------------------
-        # Check required files
-        # --------------------------------------------------
 
         if not os.path.exists(self.INDEX_FILE):
             raise FileNotFoundError(
@@ -63,11 +54,6 @@ class CureCastRetriever:
         if not os.path.exists(self.META_FILE):
             raise FileNotFoundError(
                 f"Metadata file not found:\n{self.META_FILE}"
-            )
-
-        if not os.path.exists(self.MODEL_DIR):
-            raise FileNotFoundError(
-                f"Embedding model not found:\n{self.MODEL_DIR}"
             )
 
         # --------------------------------------------------
@@ -115,14 +101,15 @@ class CureCastRetriever:
         # Load embedding model
         # --------------------------------------------------
 
+        model_path = self.MODEL_DIR if os.path.exists(self.MODEL_DIR) else "sentence-transformers/all-MiniLM-L6-v2"
         print(
-            "RAG: Loading local embedding model..."
+            f"RAG: Loading embedding model from {model_path}..."
         )
 
         self.model = SentenceTransformer(
-            self.MODEL_DIR
+            model_path
         )
-        self.mode="hybrid"
+        self.mode = "hybrid"
 
         print(
             "RAG: Vector retrieval ready."
