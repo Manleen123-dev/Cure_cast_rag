@@ -32,7 +32,10 @@ DISEASE_CSV_PATH = BACKEND_DIR / "../disease_list_with_counts.csv"
 
 def load_artifact(cbm_path: Path, meta_path: Path):
     from catboost import CatBoostClassifier
-    model = CatBoostClassifier()
+    # The default lets CatBoost create a worker pool for every available CPU.
+    # On small cloud instances those native thread stacks can exhaust memory
+    # before the web worker finishes starting.
+    model = CatBoostClassifier(thread_count=1)
     model.load_model(str(cbm_path))
     with open(meta_path, "rb") as f:
         meta = pickle.load(f)
